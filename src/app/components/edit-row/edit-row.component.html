@@ -1,0 +1,20 @@
+<section class="edit-container">
+    <mat-dialog-content>
+        <form [formGroup]="form" >
+            @for (column of columnsArray; track column){
+                @if(column != columnNames.Edit){
+                <mat-form-field appearance="fill" class="edit-form">
+                    <mat-label>{{column | titlecase}}</mat-label>
+                    <input matInput 
+                    [formControlName]="column"
+                    [type]="column == columnNames.Number || column == columnNames.Weight ? 'number' : 'string'">
+                </mat-form-field>
+                }
+            }
+          </form>
+    </mat-dialog-content>
+    <mat-dialog-actions>
+        <button mat-raised-button (click)="onClose()">Close</button>
+        <button mat-flat-button (click)="onSubmit()">Submit</button>
+    </mat-dialog-actions>
+</section>
