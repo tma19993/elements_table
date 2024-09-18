@@ -25,6 +25,12 @@
         th,td {
           text-align: center;
         }
+        .table--empty-cell{
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+        }
       }
  }
 }

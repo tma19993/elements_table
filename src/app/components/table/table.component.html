@@ -8,8 +8,8 @@
       </mat-form-field>
     </form>
   </div>
-  <div  class="table-content" >
-    <table mat-table [dataSource]="filterElements" *ngIf="!loader; else loading">
+  <div  class="table-content">
+    <table mat-table [dataSource]="filterElements" *ngIf="!loader && !!filterElements; else loading">
       @for (column of columns; track column){
         <ng-container [matColumnDef]="column">
           <th 
@@ -40,6 +40,11 @@
       }
       <tr mat-header-row *matHeaderRowDef="columns"></tr>
       <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+      <tr *matNoDataRow>
+        <td class="table--empty-cell" [attr.colspan]="filterElements.length">
+          No data matching the search.
+        </td>
+      </tr>
     </table>
   </div>
 
