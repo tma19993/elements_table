@@ -9,7 +9,8 @@
     </form>
   </div>
   <div  class="table-content">
-    <table mat-table [dataSource]="filterElements" *ngIf="!loader && !!filterElements; else loading">
+    <ng-container *ngIf="(loader$ | async) === false && (filterElements$ | async) as filterElements; else loading">
+    <table mat-table [dataSource]="filterElements">
       @for (column of columns; track column){
         <ng-container [matColumnDef]="column">
           <th 
@@ -41,15 +42,13 @@
       <tr mat-header-row *matHeaderRowDef="columns"></tr>
       <tr mat-row *matRowDef="let row; columns: columns;"></tr>
       <tr *matNoDataRow>
-        <td class="table--empty-cell" [attr.colspan]="filterElements.length">
+        <td class="table--empty-cell" [attr.colspan]="(filterElements$ | async)?.length">
           No data matching the search.
         </td>
       </tr>
     </table>
+  </ng-container>
   </div>
-
-
-  
 </section>
 
 <ng-template #loading>

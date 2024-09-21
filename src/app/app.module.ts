@@ -14,6 +14,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { GetElementsServiceMock } from './mocks';
 import { TableComponent } from './components';
+import { RxState } from '@rx-angular/state';
 @NgModule({
   declarations: [
     AppComponent,
@@ -34,6 +35,7 @@ import { TableComponent } from './components';
     BrowserModule,
   ],
   providers: [
+    RxState,
     provideHttpClient(),
     provideClientHydration(),
     {provide: GetElementsService, useClass: GetElementsServiceMock}

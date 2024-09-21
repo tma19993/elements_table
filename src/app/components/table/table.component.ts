@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { GetElementsService } from '../../services';
-import { PeriodicElement } from '../../types';
-import { debounceTime, finalize, tap } from 'rxjs';
+import { ElementsState, PeriodicElement } from '../../types';
+import { debounceTime, Observable, tap } from 'rxjs';
 import { Columns } from '../../constants/constants';
 import { FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { EditRowComponent } from '../index';
+import { RxState } from '@rx-angular/state';
 
 
 @Component({
@@ -14,19 +15,22 @@ import { EditRowComponent } from '../index';
   styleUrl: './table.component.scss',
 })
 export class TableComponent {
-  public loader: boolean = true;
   public columns: string[] =  Object.values(Columns);
   public searchInput: FormControl = new FormControl('');
-  public filterElements: PeriodicElement[];
-  private elements: PeriodicElement[];
+  public loader$: Observable<boolean>;
+  public filterElements$: Observable<PeriodicElement[]>;
   constructor(
     private getElements: GetElementsService,
-    private dialog: MatDialog
-  ) {}
+    private dialog: MatDialog,
+    private state: RxState<ElementsState>
+  ) {
+    this.setData();
+  }
 
   public ngOnInit(): void {
     this.getData();
-    this.searchEvent();
+    this.setupSearchEvent();
+
   }
 
   public editRow(element: PeriodicElement, index: number): void {
@@ -37,9 +41,14 @@ export class TableComponent {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if(!!result){
-        this.elements = [...this.filterElements.slice(0, index), result, ...this.filterElements.slice(index + 1)];
-      this.filterElements = [...this.elements];
+      if (result) {
+        this.state.set(({ filteredElements }) => ({
+          filteredElements: [
+            ...filteredElements.slice(0, index),
+            result,
+            ...filteredElements.slice(index + 1),
+          ],
+        }));
       }
     });
   }
@@ -47,33 +56,39 @@ export class TableComponent {
   private getData(): void {
     this.getElements.get().pipe(
         tap((elements) => {
-          this.elements = elements;
-          this.filterElements = elements;
-        }),
-        finalize(() => {
-          this.loader = false;
+          console.log(elements);
+         this.state.set({elements,filteredElements: elements, loader: false})
         })
       ).subscribe();
   }
 
-  private searchEvent(): void {
+  private setData(): void{
+    this.state.set({ loader: true, search: "", elements: [], filteredElements: [] });
+    this.loader$ = this.state.select("loader");
+    this.filterElements$ =this.state.select("filteredElements");
+  }
+
+  private setupSearchEvent(): void {
     this.searchInput.valueChanges
       .pipe(
-        tap(() => setTimeout(() => (this.loader = true), 1000)),
-        debounceTime(2000)
+        debounceTime(2000),
+        tap((searchValue) => {
+          this.state.set({ loader: true, search: searchValue });
+        })
       )
       .subscribe((searchValue) => {
-        if(searchValue == "" ){
-          this.filterElements = [...this.elements];
-        }else{
-          this.filterElements = this.filteredElements(searchValue);
-        }
-        this.loader = false;
+        this.state.set(({ elements }) => ({
+          filteredElements: this.filteredElements(elements, searchValue),
+          loader: false,
+        }));
       });
   }
 
-  private filteredElements(searchValue: string): PeriodicElement[] {
-    return this.elements.filter(
+  private filteredElements(elements: PeriodicElement[], searchValue: string): PeriodicElement[] {
+    if (!searchValue) {
+      return [...elements];
+    }
+    return elements.filter(
       (element) =>
         element.number == parseInt(searchValue) ||
         element.weight?.toString().startsWith(searchValue) ||
