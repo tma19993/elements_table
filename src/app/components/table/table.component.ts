@@ -8,14 +8,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { EditRowComponent } from '../index';
 import { RxState } from '@rx-angular/state';
 
-
 @Component({
   selector: 'app-table',
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss',
 })
 export class TableComponent {
-  public columns: string[] =  Object.values(Columns);
+  public columns: string[] = Object.values(Columns);
   public searchInput: FormControl = new FormControl('');
   public loader$: Observable<boolean>;
   public filterElements$: Observable<PeriodicElement[]>;
@@ -30,42 +29,40 @@ export class TableComponent {
   public ngOnInit(): void {
     this.getData();
     this.setupSearchEvent();
-
   }
 
   public editRow(element: PeriodicElement, index: number): void {
     const dialogRef = this.dialog.open(EditRowComponent, {
       data: element,
-      width: "400px",
-      height: "400px"
+      width: '400px',
+      height: '400px',
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result) {
-        this.state.set(({ filteredElements }) => ({
-          filteredElements: [
-            ...filteredElements.slice(0, index),
-            result,
-            ...filteredElements.slice(index + 1),
-          ],
+        this.state.set(({ filteredElements,elements }) => ({
+          filteredElements: [...filteredElements.slice(0, index), result, ...filteredElements.slice(index + 1)],
+          elements: [...elements.slice(0, index), result, ...elements.slice(index + 1)],
         }));
       }
     });
   }
 
   private getData(): void {
-    this.getElements.get().pipe(
-        tap((elements) => {
-          console.log(elements);
-         this.state.set({elements,filteredElements: elements, loader: false})
-        })
-      ).subscribe();
+    this.getElements.get()
+      .pipe(tap((elements) => {this.state.set({elements, filteredElements: elements, loader: false})}))
+      .subscribe();
   }
 
-  private setData(): void{
-    this.state.set({ loader: true, search: "", elements: [], filteredElements: [] });
-    this.loader$ = this.state.select("loader");
-    this.filterElements$ =this.state.select("filteredElements");
+  private setData(): void {
+    this.state.set({
+      loader: true,
+      search: '',
+      elements: [],
+      filteredElements: [],
+    });
+    this.loader$ = this.state.select('loader');
+    this.filterElements$ = this.state.select('filteredElements');
   }
 
   private setupSearchEvent(): void {
@@ -77,17 +74,19 @@ export class TableComponent {
         })
       )
       .subscribe((searchValue) => {
-        this.state.set(({ elements }) => ({
-          filteredElements: this.filteredElements(elements, searchValue),
-          loader: false,
-        }));
+          this.state.set(({ elements }) => ({
+            filteredElements: this.filteredElements(elements, searchValue),
+            loader: false,
+          }));
+        
       });
   }
 
   private filteredElements(elements: PeriodicElement[], searchValue: string): PeriodicElement[] {
-    if (!searchValue) {
-      return [...elements];
+    if (!searchValue || searchValue.trim() === "") {
+      return [...elements];  
     }
+  
     return elements.filter(
       (element) =>
         element.number == parseInt(searchValue) ||
